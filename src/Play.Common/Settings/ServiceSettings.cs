@@ -11,4 +11,9 @@ public class ServiceSettings
     /// The authority that the microservice will demand to generate access tokens from.
     /// </summary>
     public string Authority { get; init; }
+
+    /// <summary>
+    /// Used to specified current broker (i.e RabbitMQ or Azure Service Bus)
+    /// </summary>
+    public string MessageBroker { get; init; }
 }
