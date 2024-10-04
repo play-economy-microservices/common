@@ -16,4 +16,9 @@ public class ServiceSettings
     /// Used to specified current broker (i.e RabbitMQ or Azure Service Bus)
     /// </summary>
     public string MessageBroker { get; init; }
+
+    /// <summary>
+    /// The Key Vault name to retrieve secrets from. 
+    /// </summary>
+    public string KeyVaultName { get; init; }
 }
