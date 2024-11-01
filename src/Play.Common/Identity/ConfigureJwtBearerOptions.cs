@@ -5,71 +5,58 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Play.Common.Settings;
 
-namespace Play.Common.Identity;
-
-/// <summary>
-/// This class responsible for configuring JWT Bearer authentication options based on the
-/// provided configuration settings, ensuring that the authentication middleware is properly
-/// configured for your ASP.NET Core application.
-/// </summary>
-public class ConfigureJwtBearerOptions : IConfigureNamedOptions<JwtBearerOptions>
+namespace Play.Common.Identity
 {
-    private const string AccessTokenParameter = "access_token";
-
-    private const string MessageHubPath = "/messageHub";
-
-    /// <summary>
-    /// Have an instance of configuration to get Selections respectively.
-    /// </summary>
-    private readonly IConfiguration configuration;
-
-    public ConfigureJwtBearerOptions(IConfiguration configuration)
+    public class ConfigureJwtBearerOptions : IConfigureNamedOptions<JwtBearerOptions>
     {
-        this.configuration = configuration;
-    }
+        private const string AccessTokenParameter = "access_token";
+        private const string MessageHubPath = "/messageHub";
 
-    // You're able to generalize any microservice for Identity Service configurations. Recall that the audience is the
-    // name of the service, and the authority is where the microservices will request to generate access tokens from.
-    // Ensure to also include MapInBoundClaims to false to avoid legacy errors conflict with newer external identity providers
-    // because they might be using modern claims that this service doesn't use.
-    public void Configure(string? name, JwtBearerOptions options)
-    {
-        if (name == JwtBearerDefaults.AuthenticationScheme)
+        private readonly IConfiguration configuration;
+
+        public ConfigureJwtBearerOptions(IConfiguration configuration)
         {
-            var serviceSettings = configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>();
-
-            options.Authority = serviceSettings.Authority;
-            options.Audience = serviceSettings.ServiceName;
-            options.MapInboundClaims = false;
-            options.TokenValidationParameters = new TokenValidationParameters()
-            {
-                NameClaimType = "name",
-                RoleClaimType = "role"
-            };
-
-
-            options.Events = new JwtBearerEvents
-            {
-                OnMessageReceived = context =>
-                {
-                    // received from SignalR Communication
-                    var accessToken = context.Request.Query[AccessTokenParameter];
-                    var path = context.HttpContext.Request.Path;
-
-                    // the message must of came from the right hub path
-                    if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments(MessageHubPath))
-                    {
-                        context.Token = accessToken;
-                    }
-                    return Task.CompletedTask;
-                }
-            };
+            this.configuration = configuration;
         }
-    }
 
-    // For this method just call the previous signature method.
-    public void Configure(JwtBearerOptions options)
-    {
-        Configure(Options.DefaultName, options);
+        public void Configure(string name, JwtBearerOptions options)
+        {
+            if (name == JwtBearerDefaults.AuthenticationScheme)
+            {
+                var serviceSettings = configuration.GetSection(nameof(ServiceSettings))
+                                                   .Get<ServiceSettings>();
+
+                options.Authority = serviceSettings.Authority;
+                options.Audience = serviceSettings.ServiceName;
+                options.MapInboundClaims = false;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    NameClaimType = "name",
+                    RoleClaimType = "role"
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query[AccessTokenParameter];
+                        var path = context.HttpContext.Request.Path;
+
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            path.StartsWithSegments(MessageHubPath))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
+            }
+        }
+
+        public void Configure(JwtBearerOptions options)
+        {
+            Configure(Options.DefaultName, options);
+        }
     }
 }

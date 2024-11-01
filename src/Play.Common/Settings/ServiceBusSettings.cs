@@ -1,6 +1,7 @@
-namespace Play.Common.Settings;
-
-public class ServiceBusSettings
+namespace Play.Common.Settings
 {
-    public string ConnectionString { get; init; }
+    public class ServiceBusSettings
+    {
+        public string ConnectionString { get; init; }
+    }
 }

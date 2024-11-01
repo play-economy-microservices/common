@@ -4,31 +4,26 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Play.Common.Settings;
 
-namespace Play.Common.Configuration;
-
-public static class Extensions
+namespace Play.Common.Configuration
 {
-    /// <summary>
-    /// This method configures Azure Key Vault integration to store and retrieve secrets during runtime.
-    /// It applies only in the production environment. In this case, it uses the default Azure credentials
-    /// available for the environment to authenticate to the Key Vault.
-    /// </summary>
-    public static IHostBuilder ConfigureAzureKeyVault(this IHostBuilder builder)
+    public static class Extensions
     {
-        return builder.ConfigureAppConfiguration((context, configurationBuilder) =>
+        public static IHostBuilder ConfigureAzureKeyVault(this IHostBuilder builder)
         {
-            // Only use Key vault in production and use default
-            // Azure credentials available for the environment to authenticate
-            if (context.HostingEnvironment.IsProduction())
+            return builder.ConfigureAppConfiguration((context, configurationBuilder) =>
             {
-                // Get the keyvault name (this is general for all services)
-                var configuration = configurationBuilder.Build();
-                var serviceSettings = configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>();
-                
-                configurationBuilder.AddAzureKeyVault(
-                    new Uri($"https://{serviceSettings.KeyVaultName}.vault.azure.net/"),
-                    new DefaultAzureCredential());
-            }
-        });
+                if (context.HostingEnvironment.IsProduction())
+                {
+                    var configuration = configurationBuilder.Build();
+                    var serviceSettings = configuration.GetSection(nameof(ServiceSettings))
+                                                       .Get<ServiceSettings>();
+
+                    configurationBuilder.AddAzureKeyVault(
+                        new Uri($"https://{serviceSettings.KeyVaultName}.vault.azure.net/"),
+                        new DefaultAzureCredential()
+                    );
+                }
+            });
+        }
     }
 }

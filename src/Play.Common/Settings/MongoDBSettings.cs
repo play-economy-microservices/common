@@ -1,23 +1,19 @@
-namespace Play.Common.Settings;
-
-public class MongoDbSettings
+namespace Play.Common.Settings
 {
-    private string connectionString;
-
-    public string Host { get; init; }
-
-    public int Port { get; init; }
-
-    /// <summary>
-    /// CosmosDB and MongoDB connection string.
-    /// </summary>
-    public string ConnectionString
+    public class MongoDbSettings
     {
-        get
+        private string connectionString;
+
+        public string Host { get; init; }
+
+        public int Port { get; init; }
+
+        public string ConnectionString
         {
-            return string.IsNullOrWhiteSpace(connectionString)
-                ? $"mongodb://{Host}:{Port}" : connectionString;
+            get { return string.IsNullOrWhiteSpace(connectionString) 
+                    ? $"mongodb://{Host}:{Port}" : connectionString; }
+            init { connectionString = value; }
         }
-        init { connectionString = value; }
+
     }
 }

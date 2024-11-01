@@ -6,55 +6,37 @@ using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using Play.Common.Settings;
 
-namespace Play.Common.MongoDB;
-
-/// <summary>
-/// This class maintains concrete functionality for the IServiceCollection initialization to keep
-/// everything abstracted and clean within the Program.cs file and initialize any general Mongo instances
-/// of services.
-/// </summary>
-public static class Extensions
+namespace Play.Common.MongoDB
 {
-    /// <summary>
-    /// This will create a IMongoDatabase that will be used to initiate a generic
-    /// MongoRepository for any Entity.
-    /// </summary>
-	public static IServiceCollection AddMongo(this IServiceCollection services)
+    public static class Extensions
     {
-        // Keep original types when inserting MongoDB Docouments
-        BsonSerializer.RegisterSerializer(new GuidSerializer(BsonType.String));
-        BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer(BsonType.String));
-
-        // Construct the MongoDB Client
-        services.AddSingleton(serviceProvider =>
+        public static IServiceCollection AddMongo(this IServiceCollection services)
         {
-            // Get configuration service from infrastructure
-            var configuration = serviceProvider.GetService<IConfiguration>();
+            BsonSerializer.RegisterSerializer(new GuidSerializer(BsonType.String));
+            BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer(BsonType.String));
 
-            // Bindings
-            var serviceSettings = configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>();
-            var mongoDbSettings = configuration.GetSection(nameof(MongoDbSettings)).Get<MongoDbSettings>();
+            services.AddSingleton(serviceProvider =>
+            {
+                var configuration = serviceProvider.GetService<IConfiguration>();
+                var serviceSettings = configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>();
+                var mongoDbSettings = configuration.GetSection(nameof(MongoDbSettings)).Get<MongoDbSettings>();
+                var mongoClient = new MongoClient(mongoDbSettings.ConnectionString);
+                return mongoClient.GetDatabase(serviceSettings.ServiceName);
+            });
 
-            // Init MongoClient
-            var mongoClient = new MongoClient(mongoDbSettings?.ConnectionString);
-            return mongoClient.GetDatabase(serviceSettings?.ServiceName);
-        });
+            return services;
+        }
 
-        return services;
-    }
-
-    /// <summary>
-    /// Generic MongoRepository for Entities who implement IEntity 
-    /// </summary>
-    public static IServiceCollection AddMongoRepository<T>(this IServiceCollection services, string collectionName) where T : IEntity
-    {
-        services.AddSingleton<IRepository<T>>(serviceProvider =>
+        public static IServiceCollection AddMongoRepository<T>(this IServiceCollection services, string collectionName)
+            where T : IEntity
         {
-            // This call will work because we've registered the IMongoDatabase beforehand
-            var database = serviceProvider.GetService<IMongoDatabase>();
-            return new MongoRepository<T>(database, collectionName);
-        });
+            services.AddSingleton<IRepository<T>>(serviceProvider =>
+            {
+                var database = serviceProvider.GetService<IMongoDatabase>();
+                return new MongoRepository<T>(database, collectionName);
+            });
 
-        return services;
+            return services;
+        }
     }
 }

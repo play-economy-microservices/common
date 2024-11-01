@@ -8,43 +8,46 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using MongoDB.Driver;
 using Play.Common.Settings;
 
-namespace Play.Common.HealthChecks;
-
-public static class Extensions
+namespace Play.Common.HealthChecks
 {
-    private const string MongoCheckName = "mongodb";
-    private const string ReadyTagName = "ready";
-    private const string LiveTagName = "live";
-    private const string HealthEndpoint = "health";
-    private const int DefaultSeconds = 3;
-    
-    /// <summary>
-    /// This registers a Mongo DB Health Check
-    /// </summary>
-    public static IHealthChecksBuilder AddMongoDB(this IHealthChecksBuilder builder, TimeSpan? timeSpan = default)
+    public static class Extensions
     {
-        return builder.Add(new HealthCheckRegistration(MongoCheckName, serviceProvider =>
-            {
-                var configuration = serviceProvider.GetService<IConfiguration>();
-                var mongoDbSettings = configuration.GetSection(nameof(MongoDbSettings)).Get<MongoDbSettings>();
-                var mongoClient = new MongoClient(mongoDbSettings.ConnectionString);
-                return new MongoDbHealthCheck(mongoClient);
-            },
-            HealthStatus.Unhealthy, // unhealthy status
-            new[] { ReadyTagName }, // tags
-            TimeSpan.FromSeconds(DefaultSeconds) // timeout if it's not healthy
-        ));
-    }
+        private const string MongoCheckName = "mongodb";
+        private const string ReadyTagName = "ready";
+        private const string LiveTagName = "live";
+        private const string HealthEndpoint = "health";
+        private const int DefaultSeconds = 3;
 
-    public static void MapPlayEconomyHealthChecks(this IEndpointRouteBuilder endpoints)
-    {
-        endpoints.MapHealthChecks($"/{HealthEndpoint}/{ReadyTagName}", new HealthCheckOptions()
+        public static IHealthChecksBuilder AddMongoDb(
+            this IHealthChecksBuilder builder,
+            TimeSpan? timeout = default)
         {
-            Predicate = (check) => check.Tags.Contains(ReadyTagName)
-        });
-        endpoints.MapHealthChecks($"/{HealthEndpoint}/{LiveTagName}", new HealthCheckOptions()
+            return builder.Add(new HealthCheckRegistration(
+                    MongoCheckName,
+                    serviceProvider =>
+                    {
+                        var configuration = serviceProvider.GetService<IConfiguration>();
+                        var mongoDbSettings = configuration.GetSection(nameof(MongoDbSettings))
+                                                           .Get<MongoDbSettings>();
+                        var mongoClient = new MongoClient(mongoDbSettings.ConnectionString);
+                        return new MongoDbHealthCheck(mongoClient);
+                    },
+                    HealthStatus.Unhealthy,
+                    new[] { ReadyTagName },
+                    TimeSpan.FromSeconds(DefaultSeconds)
+                ));
+        }
+
+        public static void MapPlayEconomyHealthChecks(this IEndpointRouteBuilder endpoints)
         {
-            Predicate = (check) => false // Interpret this as: "let me know if you're alive or not"
-        });
+            endpoints.MapHealthChecks($"/{HealthEndpoint}/{ReadyTagName}", new HealthCheckOptions()
+            {
+                Predicate = (check) => check.Tags.Contains(ReadyTagName)
+            });
+            endpoints.MapHealthChecks($"/{HealthEndpoint}/{LiveTagName}", new HealthCheckOptions()
+            {
+                Predicate = (check) => false
+            });
+        }
     }
 }
