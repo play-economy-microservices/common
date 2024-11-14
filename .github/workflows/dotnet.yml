@@ -1,6 +1,10 @@
 # This workflow will build a .NET project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
 
+# The following are considered by the git client:
+# - GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+# - source-url: https://nuget.pkg.github.com/${{github.repository_owner}}/index.json
+
 name: .NET
 
 on:
@@ -38,6 +42,11 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 7.0.x
+        source-url: https://nuget.pkg.github.com/${{github.repository_owner}}/index.json
+
+      env:
+        NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # client understands this
+      
     - name: Pack
       run: |
         dotnet pack src/Play.Common/ \
