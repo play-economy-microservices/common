@@ -5,7 +5,7 @@
 # - GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 # - source-url: https://nuget.pkg.github.com/${{github.repository_owner}}/index.json
 
-name: .NET
+name: CICD
 
 on:
   push:
@@ -52,7 +52,7 @@ jobs:
         dotnet pack src/Play.Common/ \
           --configuration Release \
           -p:PackageVersion=${{ needs.generate-version.outputs.new_version }} \
-          -p:RepositoryUrl=https://github.com/${{ github.repository_owner }}/play.common \
+          -p:RepositoryUrl=https://github.com/${{github.repository_owner}}/play.common \
           -o packages
 
     - name: Publish
