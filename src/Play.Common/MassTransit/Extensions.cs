@@ -1,10 +1,6 @@
 using System;
 using System.Reflection;
-using GreenPipes;
-using GreenPipes.Configurators;
 using MassTransit;
-using MassTransit.Definition;
-using MassTransit.ExtensionsDependencyInjectionIntegration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Play.Common.Settings;
@@ -47,8 +43,6 @@ namespace Play.Common.MassTransit
                 configure.UsingPlayEconomyRabbitMq(configureRetries);
             });
 
-            services.AddMassTransitHostedService();
-
             return services;
         }
 
@@ -62,13 +56,11 @@ namespace Play.Common.MassTransit
                 configure.UsingPlayEconomyAzureServiceBus(configureRetries);
             });
 
-            services.AddMassTransitHostedService();
-
             return services;
         }        
 
         public static void UsingPlayEconomyMessageBroker(
-            this IServiceCollectionBusConfigurator configure,
+            this IBusRegistrationConfigurator configure,
             IConfiguration config,
             Action<IRetryConfigurator> configureRetries = null)
         {
@@ -87,7 +79,7 @@ namespace Play.Common.MassTransit
         }
 
         public static void UsingPlayEconomyRabbitMq(
-            this IServiceCollectionBusConfigurator configure,
+            this IBusRegistrationConfigurator configure,
             Action<IRetryConfigurator> configureRetries = null)
         {
             configure.UsingRabbitMq((context, configurator) =>
@@ -108,7 +100,7 @@ namespace Play.Common.MassTransit
         }
 
         public static void UsingPlayEconomyAzureServiceBus(
-            this IServiceCollectionBusConfigurator configure,
+            this IBusRegistrationConfigurator configure,
             Action<IRetryConfigurator> configureRetries = null)
         {
             configure.UsingAzureServiceBus((context, configurator) =>
